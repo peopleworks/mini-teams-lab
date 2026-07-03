@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MiniTeams</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="login" class="login">
+    <div class="card">
+      <h1>💬 MiniTeams</h1>
+      <p>Chat en tiempo real</p>
+      <input id="name" placeholder="Tu nombre" autocomplete="off">
+      <button id="enter">Entrar</button>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">💬 MiniTeams</div>
+      <div class="label">CANALES</div>
+      <div class="channel active"># general</div>
+      <div class="label">EN LÍNEA <span id="count"></span></div>
+      <ul id="users" class="users"></ul>
+    </aside>
+    <main class="main">
+      <header class="head"># general</header>
+      <div id="messages" class="messages"></div>
+      <div id="typing" class="typing"></div>
+      <form id="form" class="composer">
+        <input id="text" placeholder="Escribe un mensaje…" autocomplete="off">
+        <button type="submit">➤</button>
+      </form>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

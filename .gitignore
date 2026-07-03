@@ -1,0 +1,16 @@
+# Build artifacts
+bin/
+obj/
+publish/
+
+# SQLite database (se genera solo al correr)
+*.db
+*.db-shm
+*.db-wal
+
+# IDE / OS
+.vs/
+.idea/
+*.user
+.DS_Store
+Thumbs.db

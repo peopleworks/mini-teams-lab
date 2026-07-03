@@ -1,0 +1,44 @@
+{
+  "// nota": "Edita este guion a gusto. 'from' = username de la persona. {name} en replies = nombre de quien escribió.",
+
+  "personas": [
+    { "username": "ana",   "displayName": "Ana Torres",  "emoji": "👩‍💻" },
+    { "username": "luis",  "displayName": "Luis Peña",   "emoji": "🧑‍💻" },
+    { "username": "maria", "displayName": "María Gómez",  "emoji": "👩‍🎨" },
+    { "username": "botia", "displayName": "Bot IA",       "emoji": "🤖" }
+  ],
+
+  "timeline": [
+    { "from": "ana",   "text": "¡Buenas equipo! ¿Vieron que hoy en la clase montaron un mini Teams? 👀", "delayMs": 1200, "typingMs": 1300 },
+    { "from": "luis",  "text": "Sí 😄 con .NET, SignalR y todo. Esto que ven ahora ES esa app.", "delayMs": 1600, "typingMs": 1400 },
+    { "from": "maria", "text": "Y el diseño quedó igualito a Teams 💜", "delayMs": 1500, "typingMs": 1100 },
+    { "from": "botia", "text": "Confirmo: 4 compañeros conectados en tiempo real 🤖", "delayMs": 1500, "typingMs": 1300 },
+    { "from": "ana",   "text": "Luis, ¿ya te conectó la base de datos?", "delayMs": 1800, "typingMs": 1000 },
+    { "from": "luis",  "text": "Casi me muero 😅 era localhost otra vez. Puse 127.0.0.1 y listo.", "delayMs": 1700, "typingMs": 1500 },
+    { "from": "maria", "text": "jajaja el clásico. Deberían ponerlo en una camiseta", "delayMs": 1500, "typingMs": 1200 },
+    { "from": "botia", "text": "Tip del día: entre tarea y tarea, /clear. Contexto fresco rinde más 🧠", "delayMs": 1800, "typingMs": 1400 },
+    { "from": "ana",   "text": "¿Y la demo de Playwright?", "delayMs": 1600, "typingMs": 900 },
+    { "from": "luis",  "text": "Va a estar 🔥 el navegador se maneja solo", "delayMs": 1500, "typingMs": 1100 },
+    { "from": "maria", "text": "Miren, les mando el 'escribiendo…' en vivo 👇", "delayMs": 1500, "typingMs": 2000 },
+    { "from": "botia", "text": "Todo esto entregado por SignalR, sin recargar la página. Magia ✨", "delayMs": 1600, "typingMs": 1300 },
+    { "from": "ana",   "text": "Si algún chico está viendo esto: escríbanos algo 👋", "delayMs": 1800, "typingMs": 1200 },
+    { "from": "luis",  "text": "¡Sí! saluden y les respondemos 😎", "delayMs": 1500, "typingMs": 1000 }
+  ],
+
+  "reactions": [
+    { "triggers": ["hola", "buenas", "hey", "saludos"], "replies": ["¡Hola {name}! 👋 bienvenido al canal", "¡Ey {name}! justo decíamos que saludaras 😄", "¡{name} entró al chat! 🎉"] },
+    { "triggers": ["demo", "playwright"], "replies": ["esa demo va a estar 🔥", "¡el navegador solito, ya verás {name}!"] },
+    { "triggers": ["pedro", "maestro", "profe"], "replies": ["¡El profe en línea! 👀", "atentos que habló el maestro 🙌"] },
+    { "triggers": ["gracias", "genial", "wow", "increible", "increíble"], "replies": ["¡a ti {name}! 🙌", "¿verdad que sí? 😎"] },
+    { "triggers": ["signalr", "tiempo real", "realtime"], "replies": ["SignalR haciendo su magia ✨", "WebSockets, bebé 🚀"] }
+  ],
+
+  "idleChatter": [
+    "¿alguien más ama el indicador de 'escribiendo…'? 😌",
+    "recuerden: 127.0.0.1, no localhost 😉",
+    "yo ya le di /clear como tres veces, vuelvo a nacer 🧠",
+    "esto lo armaron en una clase… imagínense en un sprint 💪",
+    "SignalR entregando en milisegundos, ni se siente ⚡",
+    "el contrato tipado compartido nos salvó de mil bugs 🙏"
+  ]
+}
