@@ -6,13 +6,18 @@ using Microsoft.EntityFrameworkCore;
 // MiniTeams — app de REFERENCIA / respaldo del guion en vivo.
 // Implementa EXACTAMENTE el contrato del hub que espera el simulador:
 //   /hub/chat?user=<nombre>
-//   C→S: SendMessage(text), SetTyping(isTyping)
-//   S→C: ReceiveMessage(user, text, sentAt), UserTyping(user, isTyping), PresenceChanged(online[])
+//   C→S: SendMessage(text), SetTyping(isTyping), SendReaction(emoji)
+//   S→C: ReceiveMessage(user, text, sentAt), UserTyping(user, isTyping), PresenceChanged(online[]), ReceiveReaction(user, emoji)
+// Videollamada 1:1 (señalización WebRTC; el vídeo va P2P, no por el server):
+//   C→S: CallUser/AcceptCall/DeclineCall/HangUp(targetUser), SendSignal(targetUser, signal)
+//   S→C: IncomingCall/CallAccepted/CallDeclined/CallEnded(fromUser), ReceiveSignal(fromUser, signal)
 // Historial: EF Core + SQLite (miniteams.db). Al conectar, recibes los últimos 50.
 // ─────────────────────────────────────────────────────────────────────────────
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
+// Identifica cada conexión por su ?user= para poder dirigir la señalización con Clients.User(nombre).
+builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 builder.Services.AddDbContext<ChatDb>(o => o.UseSqlite("Data Source=miniteams.db"));
 
 var app = builder.Build();
@@ -90,4 +95,32 @@ sealed class ChatHub(ChatDb db) : Hub
     /// <summary>Notifica "está escribiendo…" a los demás.</summary>
     public Task SetTyping(bool isTyping) =>
         Clients.Others.SendAsync("UserTyping", User, isTyping);
+
+    /// <summary>Una reacción (emoji) efímera; se reparte a TODOS para animarla en pantalla.
+    /// No se guarda en la base: es puro espectáculo en tiempo real.</summary>
+    public Task SendReaction(string emoji)
+    {
+        // Cinturón de seguridad: una reacción es un emoji corto, no un ensayo.
+        if (string.IsNullOrEmpty(emoji)) return Task.CompletedTask;
+        if (emoji.Length > 8) emoji = emoji[..8];
+        return Clients.All.SendAsync("ReceiveReaction", User, emoji);
+    }
+
+    // ── Señalización de videollamada 1:1 ──
+    // El hub NO transporta el vídeo: solo pone de acuerdo a dos navegadores (WebRTC hace el resto, P2P).
+    public Task CallUser(string targetUser)    => Clients.User(targetUser).SendAsync("IncomingCall", User);
+    public Task AcceptCall(string targetUser)  => Clients.User(targetUser).SendAsync("CallAccepted", User);
+    public Task DeclineCall(string targetUser) => Clients.User(targetUser).SendAsync("CallDeclined", User);
+    public Task HangUp(string targetUser)      => Clients.User(targetUser).SendAsync("CallEnded", User);
+
+    /// <summary>Reenvía un "sobre" opaco (oferta/respuesta SDP o candidato ICE) al otro navegador.</summary>
+    public Task SendSignal(string targetUser, string signal) =>
+        Clients.User(targetUser).SendAsync("ReceiveSignal", User, signal);
+}
+
+/// <summary>Identifica al usuario de SignalR por el <c>?user=</c> para que <c>Clients.User(nombre)</c> funcione.</summary>
+sealed class NameUserIdProvider : IUserIdProvider
+{
+    public string? GetUserId(HubConnectionContext connection) =>
+        connection.GetHttpContext()?.Request.Query["user"].ToString();
 }

@@ -57,6 +57,14 @@ encajan sin cambiar nada. Por eso lo escribimos en el `CLAUDE.md` **antes** de p
 | 4 | Historial con SQLite | Recargas y los mensajes siguen |
 | 5 | 🤯 Un equipo con guion (bots) | El canal cobra vida solo |
 | 6 | Publicar (opcional) | Todos entran por una URL |
+| | **✦ Sesión 03 — dale un cerebro y un remate visual** | |
+| 7 | Nova entra y escucha | Una IA aparece 🟢 en tu canal |
+| 8 | El cerebro: primera llamada a Claude | Nova piensa y responde de verdad |
+| 9 | Herramientas: Nova busca en el historial | IA **+ tus datos reales** |
+| 10 | 🎆 Reacciones que llueven **+ videollamada 1:1** | La sala aplaude; y vídeo dentro de la app |
+
+> 💡 ¿Prefieres verlo como **línea de tiempo con todos los prompts y botón de copiar**?
+> Está la [**receta visual**](https://peopleworks.github.io/build-with-claude-code/receta.html) — los 14 prompts, en orden.
 
 ---
 
@@ -176,6 +184,130 @@ Por eso un bot de consola, tu navegador y una futura app móvil son todos client
 
 ¿Quieres que otros entren por una URL? En [`docs/PUBLICAR-IIS.md`](docs/PUBLICAR-IIS.md) están las instrucciones
 para desplegar en IIS (con lo crítico para SignalR: **WebSockets habilitado**).
+
+---
+
+# ✦ Sesión 03 — Del chat al colega con IA
+
+En la Sesión 02 dijimos: *"un bot de consola, tu navegador y una app móvil son todos clientes iguales — el contrato es el lenguaje común."* Ahora lo cobramos: le damos al equipo **una compañera con IA de verdad, Nova**, que **piensa** cada respuesta con Claude. Y lo mejor: **no tocamos el Mini-Teams** — Nova es **otro cliente más**, igual que el simulador, solo que su cerebro es una llamada a la API de Claude.
+
+> 🔑 **Necesitas una API key de Claude** (de la plataforma, `console.anthropic.com`) en la variable de entorno `ANTHROPIC_API_KEY`.
+> Es **distinta** de tu suscripción de Claude Code y funciona con **créditos**. Con el modelo `claude-haiku-4-5` cada respuesta cuesta céntimos.
+> El código de Nova ya está en la carpeta [`colega-ia/`](colega-ia/) — ábrela para verlo o construye el tuyo con estos prompts.
+
+## ⏱️ PASO 7 — Nova entra y escucha
+
+Nova es un proyecto de consola aparte que se conecta al hub **como un cliente más**. Primero, que entre y oiga (todavía sin cerebro):
+
+```
+Crea un proyecto de consola .NET 10 llamado ColegaIA (carpeta colega-ia/) que se conecte
+al hub del Mini-Teams como un cliente más, usando Microsoft.AspNetCore.SignalR.Client 10.0.0.
+NO referencia la app: solo habla el contrato por su nombre (como el simulador).
+- Identidad: se conecta a /hub/chat?user=Nova.
+- Acepta el argumento --api <url> (por defecto http://127.0.0.1:5210).
+- Escucha ReceiveMessage(user, text, sentAt) y, por ahora, imprime en consola "user: text".
+- Ignora sus propios mensajes (cuando user == "Nova").
+- Guarda en memoria las últimas 30 líneas del canal (una cola thread-safe) — las usaremos como contexto luego.
+Al arrancar, imprime "Nova en línea" y quédate escuchando hasta Ctrl+C.
+```
+
+Con tu app corriendo, en otra terminal: `cd colega-ia && dotnet run -- --api http://127.0.0.1:5210`.
+Escribe algo desde el navegador → aparece en la consola de Nova. **Ya está adentro, porque habla el contrato.**
+
+## ⏱️ PASO 8 — 🧠 El cerebro: primera llamada a Claude
+
+Cuando alguien nombre a Nova, en vez de una frase fija le preguntamos a **Claude** — con la API cruda, sin SDK, para ver la forma real (un `system`, unos `messages`, un JSON):
+
+```
+Agrega el "cerebro" de Nova con la API de Mensajes de Claude, con HttpClient (SIN SDK):
+- Endpoint: POST https://api.anthropic.com/v1/messages
+- Headers: x-api-key (leído de la variable de entorno ANTHROPIC_API_KEY, o de --key),
+  y anthropic-version: 2023-06-01.
+- Modelo: claude-haiku-4-5-20251001 (o --model / variable CLAUDE_MODEL). max_tokens 400.
+- Dispara SOLO cuando el mensaje mencione "Nova" (o "@nova"), y nunca a sus propios mensajes.
+- System prompt: "Eres Nova, una compañera de equipo con IA en un chat estilo Teams de PeopleWorks.
+  Respondes en español, cálida y BREVE (1-3 frases, como un chat)."
+- En el mensaje de usuario, incluye las últimas líneas del canal (contexto) + lo que escribió la persona.
+- Toma el texto de la respuesta de Claude y publícalo con SendMessage.
+- Si la API falla, que Nova diga algo amable en el canal en vez de caerse.
+```
+
+Y dale **modales humanos** para que no se note tan máquina:
+
+```
+Dale a Nova modales humanos:
+1) Antes de pensar, llama SetTyping(true); cuando publique la respuesta, SetTyping(false).
+   Así el "Nova está escribiendo…" del Mini-Teams se enciende de verdad mientras Claude piensa.
+2) Anti-spam: que no responda más de una vez cada ~2 segundos, y que NO procese dos respuestas
+   a la vez (si ya está pensando, ignora el nuevo disparo).
+```
+
+Pon la key (`$env:ANTHROPIC_API_KEY = "sk-ant-..."`), reinicia Nova, y desde el navegador escribe **"Nova, preséntate al equipo en una frase"**. Responde de verdad. 🎉
+
+> **La clave nunca va en el código** — va en una variable de entorno. Semilla de buena práctica.
+
+## ⏱️ PASO 9 — 🛠️ Herramientas: Nova consulta el historial real
+
+Hasta ahora Nova solo sabe lo que oyó desde que entró. Le damos **manos**: que busque en la misma base SQLite de la app. Esto es **IA + tus datos**.
+
+```
+Dale a Nova una herramienta con "tool use" de Claude:
+- Declara en el request un tool "buscar_historial" con input { termino: string, limite?: int }.
+- Cuando la respuesta de Claude tenga stop_reason == "tool_use", ejecuta la herramienta y
+  devuélvele el resultado como un bloque tool_result, y vuelve a llamar a la API (lazo) hasta
+  que conteste con texto. Pon un tope de 4 vueltas por seguridad.
+- La herramienta lee la MISMA base SQLite de la app en solo lectura (Microsoft.Data.Sqlite,
+  Data Source=<db>;Mode=ReadOnly): SELECT User, Text FROM Messages WHERE Text LIKE '%termino%'
+  ORDER BY Id DESC LIMIT <limite (máx 20)>. Devuelve las líneas encontradas.
+- Acepta --db <ruta> (por defecto ..\app-referencia\miniteams.db). Si la base no existe,
+  que la herramienta degrade con gracia (que Nova diga que no puede ver el historial ahora).
+```
+
+Pregunta **"Nova, ¿qué se dijo sobre el deploy?"** → verás que **usa la herramienta**, lee SQLite y responde citando el mensaje real. No se lo inventó: **lo buscó en tus datos.**
+
+> **El lazo** `pregunta → Claude pide una herramienta → tu código la ejecuta → Claude ve el resultado → responde`
+> es, a mano, exactamente lo que hace un servidor **MCP** por dentro.
+
+## ⏱️ PASO 10 — 🎆 El remate visual: reacciones + videollamada
+
+Dos funciones puro Mini-Teams (no usan la API). Cada una demuestra lo mismo: **una función nueva es una palabra nueva en el contrato — la agregas una vez y TODOS los clientes la reciben.**
+
+**👏 Reacciones que llueven** — servidor y cliente:
+
+```
+Agrega al ChatHub un método SendReaction(string emoji) que reparta a TODOS (Clients.All)
+un evento ReceiveReaction(user, emoji). NO lo guardes en la base: es efímero. Limita el emoji
+a pocos caracteres por seguridad.
+```
+
+```
+Añade una barra de botones de emoji (👏 ❤️ 🎉 🔥 😂). Al tocar uno, invoca SendReaction(emoji).
+Escucha ReceiveReaction y haz "flotar" ese emoji subiendo por la pantalla (posición y deriva al
+azar; se borra al terminar la animación). Añade un "aplausómetro" en la cabecera que suba con cada
+reacción y baje solo; cuando llegue al tope, dispara una lluvia de confeti.
+```
+
+**📹 Videollamada 1:1** — el mismo hub ahora te conecta una llamada (el vídeo va **directo entre navegadores**; el hub solo los presenta):
+
+```
+Agrega señalización de videollamada 1:1 al hub. Registra un IUserIdProvider que use el ?user=
+como identidad (para poder dirigir eventos con Clients.User(nombre)). Métodos del cliente al
+servidor: CallUser/AcceptCall/DeclineCall/HangUp(targetUser) y SendSignal(targetUser, signal).
+Reenvían al destinatario: IncomingCall/CallAccepted/CallDeclined/CallEnded(fromUser) y
+ReceiveSignal(fromUser, signal). El hub NO transporta vídeo: solo reenvía "sobres".
+```
+
+```
+Botón 📞 junto a cada usuario en línea. Al llamar, usa WebRTC (RTCPeerConnection con el STUN
+de Google) para vídeo+audio P2P; intercambia la oferta/respuesta SDP y los candidatos ICE por
+SendSignal/ReceiveSignal del hub. Muestra un panel con el vídeo remoto grande, tu vídeo en
+pequeño (PiP) y botones de micro, cámara y colgar, más un aviso de llamada entrante con
+Aceptar/Rechazar.
+```
+
+> El vídeo exige **contexto seguro**: funciona en `127.0.0.1` y en `https://`. Entre redes distintas, producción puede requerir un servidor **TURN** (relay); para tu demo local no hace falta.
+
+La carpeta [`solucion/`](solucion/) ya trae **todo esto integrado** (reacciones + videollamada), por si te quieres comparar.
 
 ---
 

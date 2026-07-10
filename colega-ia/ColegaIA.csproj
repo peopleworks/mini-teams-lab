@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MiniTeams.ColegaIA</RootNamespace>
+    <AssemblyName>ColegaIA</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Igual que el simulador: NO referencia la app. Solo habla el contrato del hub.
+       La diferencia es que su "cerebro" es una llamada real a la API de Claude. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+    <!-- Para la herramienta "buscar_historial": lee la MISMA base SQLite que escribe la app (solo lectura). -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

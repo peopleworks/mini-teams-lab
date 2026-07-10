@@ -25,9 +25,22 @@
       <ul id="users" class="users"></ul>
     </aside>
     <main class="main">
-      <header class="head"># general</header>
+      <header class="head">
+        <span># general</span>
+        <div class="applause" title="Aplausómetro">
+          <span class="applause-emoji">👏</span>
+          <div class="meter"><div id="meterFill" class="meter-fill"></div></div>
+        </div>
+      </header>
       <div id="messages" class="messages"></div>
       <div id="typing" class="typing"></div>
+      <div id="reactionBar" class="reaction-bar">
+        <button class="react" data-emoji="👏" type="button">👏</button>
+        <button class="react" data-emoji="❤️" type="button">❤️</button>
+        <button class="react" data-emoji="🎉" type="button">🎉</button>
+        <button class="react" data-emoji="🔥" type="button">🔥</button>
+        <button class="react" data-emoji="😂" type="button">😂</button>
+      </div>
       <form id="form" class="composer">
         <input id="text" placeholder="Escribe un mensaje…" autocomplete="off">
         <button type="submit">➤</button>
@@ -35,7 +48,11 @@
     </main>
   </div>
 
+  <!-- Capa de efectos: aquí flotan las reacciones y cae el confeti (no intercepta clics) -->
+  <div id="fx" class="fx-layer"></div>
+
   <script src="https://unpkg.com/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
+  <script src="call.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

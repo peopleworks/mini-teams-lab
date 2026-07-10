@@ -28,3 +28,11 @@ Un chat en tiempo real estilo Microsoft Teams, en un solo proyecto:
 
 ## Gotcha (Windows)
 - Si algo "no conecta", usa 127.0.0.1 en vez de localhost (IPv6).
+
+## Nova = otro cliente del contrato (Sesión 03)
+- Nova (carpeta colega-ia/) es una IA que participa en el chat. NO modifica la app:
+  se conecta al hub como un cliente más (igual que el simulador), hablando estos mismos 5 nombres.
+- Su cerebro es una llamada a la API de Claude (HttpClient, sin SDK); la key va en la variable
+  de entorno ANTHROPIC_API_KEY, nunca en el código.
+- Regla que se mantiene: agregar una función = agregar una palabra al contrato una sola vez,
+  y todos los clientes (navegador, simulador, Nova) la reciben.
